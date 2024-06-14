@@ -1,0 +1,319 @@
+---
+title: "Final-Project"
+author: "Mujaheed Abdulmalik"
+date: "2023-07-15"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#  DATASET  
+
+```{r}
+data_2 <- readxl::read_xlsx("Maths.csv") #import dataset
+
+```
+
+
+# LIBRARIES
+```{r}
+library(rstatix) #library for statstical tools
+library(ez)
+library(wPerm) #library for statstical tools like for non parameric one way anova
+```
+
+
+
+# IND ANOVA - PARENTAL RELATIONSHIP STATUS & STUDENT FINAL GRADE 
+
+```{r}
+#we have to group our data and get some descriptive statistics
+data_pstatus <- data.frame(p_status = data_2$Pstatus, final_grade = data_2$G3)
+parent.group <- group_by(data_pstatus, p_status )
+get_summary_stats(parent.group, type = "mean_sd") #check for mean and standard deviation of both factors 
+```
+
+## ASSUMPTIONS  
+
+Identify outliers 
+```{r}
+identify_outliers(parent.group, final_grade)
+
+```
+
+
+Second, we need to test the normality assumption.  
+
+```{r}
+shapiro_test(parent.group, final_grade)
+```
+
+```{r}
+mod_1 <-  lm(final_grade ~ p_status, data = parent.group) 
+par(mar = c(4,4,1.5, 1), mgp = c(2.5, 1, 0), mfrow =c(2,2))
+plot(mod_1, which =1:3) #using the residual plots to check for normality
+boxplot(final_grade ~ p_status, data = parent.group) #using boxplot to check for equal variance assumption
+```
+
+THe assumptions of equal variance was failed, a non parametric test using wperm will be used 
+
+## TEST STATISTIC AND P VALUE  
+
+```{r}
+perm.oneway.anova(data_pstatus$final_grade, data_pstatus$p_status, R=3000)
+
+```
+
+## CONCLUSION  
+ P-value is greater than alpha so we fail to reject null. 
+ 
+ 
+
+\newpage
+
+
+# IND ONE & TWO WAY ANOVA- MOTHER, FATHER OCCUPATION & STUDENT FINAL GRADE  
+
+
+```{r}
+#we have to group our data and get some descriptive statistics
+data_Mjob <- data.frame(m_job = data_2$Mjob, final_grade = data_2$G3)
+data_2$Mjob <- as.factor(data_2$Mjob)
+m.group <- group_by(data_Mjob, m_job )
+get_summary_stats(m.group, type = "mean_sd")
+```
+
+## ASSUMPTIONS  
+
+Identify outliers 
+```{r}
+identify_outliers(m.group, final_grade)
+
+```
+
+ 
+```{r}
+#check for assumptions using residuals plot
+mod_2 <-  lm(final_grade ~ m_job, data = m.group) 
+par(mar = c(4,4,1.5, 1), mgp = c(2.5, 1, 0), mfrow =c(2,2))
+plot(mod_2, which =1:3)
+boxplot(final_grade ~ m_job, data = m.group)
+```
+ 
+## TEST STAIISTIC AND P-VALUE   
+
+```{r}
+aov_2 <- aov(final_grade ~ m_job, data = m.group) #one way
+summary(aov_2)
+aov_two_way <- aov(G3 ~ Mjob * Fjob, data = data_2) #two-way
+summary(aov_two_way)
+```
+ 
+ \
+```{r}
+#using tukeyhsd to check for the proportional difference in groups and account for adj p-value
+TukeyHSD(aov(lm(final_grade ~ m_job, data = m.group)))  
+``` 
+
+## Effect size  
+
+Check for effect size using eta squared  
+
+```{r}
+eta_squared(aov_2)
+```
+
+
+## Conclusion 
+
+it is statistically significant, children moms who work under health tends to do bether than children with moms under others 
+
+\newpage  
+
+# IND ANOVA - FATHER OCCUPATION & STUDENT FINAL GRADE  
+
+
+```{r}
+#we have to group our data and get some descriptive statistics
+data_Fjob <- data.frame(f_job = data_2$Fjob, final_grade = data_2$G3)
+f.group <- group_by(data_Fjob, f_job )
+get_summary_stats(f.group, type = "mean_sd")
+```
+
+## ASSUMPTIONS  
+
+Identify outliers 
+```{r}
+identify_outliers(f.group, final_grade)
+
+```
+
+ 
+```{r}
+mod_f <-  lm(final_grade ~ f_job, data = f.group) 
+par(mar = c(4,4,1.5, 1), mgp = c(2.5, 1, 0), mfrow =c(2,2))
+plot(mod_f, which =1:3)
+boxplot(final_grade ~ f_job, data = f.group)
+```
+ 
+## TEST STAIISTIC AND P-VALUE   
+
+```{r}
+#use permutation as assumptions was violated
+perm.oneway.anova(data_pstatus$final_grade, data_Fjob$f_job, R=3000) 
+```
+
+\newpage  
+
+
+# IND ANOVA - FAMILY SIZE & STUDENT FINAL GRADE  
+
+
+```{r}
+#we have to group our data and get some descriptive statistics
+data_Fsize <- data.frame(f_size = data_2$famsize, final_grade = data_2$G3)
+size.group <- group_by(data_Fsize, f_size)
+get_summary_stats(size.group, type = "mean_sd")
+```
+
+## ASSUMPTIONS  
+
+Identify outliers 
+```{r}
+identify_outliers(size.group, final_grade)
+
+```
+
+ 
+```{r}
+#plot for residuals to check assumptions 
+mod_3 <-  lm(final_grade ~ f_size, data = size.group) 
+par(mar = c(4,4,1.5, 1), mgp = c(2.5, 1, 0), mfrow =c(2,2))
+plot(mod_3, which =1:3)
+boxplot(final_grade ~ f_size, data = size.group)
+
+```
+
+
+## TEST STATISTIC AND P-VALUE  
+
+```{r}
+aov_3 <- aov(final_grade ~ f_size, data = size.group)
+summary(aov_3)
+```  
+
+
+
+
+\newpage  
+
+
+
+
+\newpage  
+
+# IF MOTHERS EDUCATIONAL LEVEL DETERMINES THE STUDENT SUPPORT  
+
+Contingency table  
+
+<!-- pre processing data  -->
+```{r}
+table(data_2$Medu[data_2$famsup == "yes"])
+table(data_2$Medu[data_2$famsup == "no"])
+```
+```{r}
+#create a contingency table 
+#list of yes and no values across groups
+yes <- c(1,27,58,63,93)   
+no <- c(1,33,45,36,39)
+
+#fedu.df <- matrix(data = c(none, primary, grade_school, secondary, higher), nrow = 5, ncol = 2, byrow = TRUE)
+MSupport <- matrix(data = c(yes, no), nrow = 2, ncol = 5, byrow = TRUE)
+dimnames(MSupport) <- list(Support = c("Yes", "No"),
+Education = c("none", "primary", "grade school", "secondary", "higher"))
+MSupport
+```
+
+
+```{r}
+#simulate chisq because assumptions werent met 
+chisq_results <- chisq.test(x =  MSupport, correct = FALSE, simulate.p.value = T)
+chisq_results
+```
+```{r}
+chisq.posthoc.test::chisq.posthoc.test(MSupport) #Check effects and group differences
+```
+
+check effect size using cramers V  
+
+```{r}
+effectsize::cramers_v(MSupport) #check effect size using cramers V
+```
+## CONCLUSION  
+it is statistically significant
+
+
+\newpage  
+
+# IF FATHERS EDUCATIONAL LEVEL DETERMINES THE STUDENT SUPPORT  
+
+Contingency table  
+
+<!-- pre processing data  -->
+```{r}
+table(data_2$Fedu[data_2$famsup == "yes"])
+table(data_2$Fedu[data_2$famsup == "no"])
+```
+
+
+```{r}
+#create a contingency table
+#list of yes and no values across groups
+yes <- c(1,39,67,64,71)   
+no <- c(1,44,48,36,26)
+
+#fedu.df <- matrix(data = c(none, primary, grade_school, secondary, higher), nrow = 5, ncol = 2, byrow = TRUE)
+Support <- matrix(data = c(yes, no), nrow = 2, ncol = 5, byrow = TRUE)
+dimnames(Support) <- list(Support = c("Yes", "No"),
+Education = c("none", "primary", "grade school", "secondary", "higher"))
+Support
+
+```
+
+
+
+## Test statisitc and p value   
+
+```{r}
+#simulate chisquare as assumptions werent met
+chisq_results <- chisq.test(x =  Support, correct = FALSE, simulate.p.value = T) 
+chisq_results
+```
+```{r}
+chisq.posthoc.test::chisq.posthoc.test(Support) #conduct a posthoc test for proprotional differences 
+```
+```{r}
+
+# store observed and expected
+observed_values <- chisq_results$observed
+expected_values <- chisq_results$expected
+
+# Create a bar chart
+barplot(rbind(observed_values, expected_values), beside = TRUE, col = c("blue", "red", "yellow", "green"), ylab = "Frequency", main = "Observed vs Expected Values For Fathers Education across Support")
+legend("topleft", legend = c("Observed Yes", "Observed No", "Expected Yes", "Expected No"), fill = c("blue", "red", "yellow", "green"))
+```
+
+## CONCLUSION  
+it is statistcally significant  
+
+
+## Effect size
+```{r}
+effectsize::cramers_v(Support) #check effect size using cramers V
+```
+
+
+
+
